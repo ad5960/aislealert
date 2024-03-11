@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { log } from 'console';
-import { extractPrice } from '../utils';
+import { extractPrice, extractPriceFallback } from '../utils';
 
 export async function scrapeAmazonProduct(url: string) {
     if (!url) return;
@@ -29,7 +29,10 @@ export async function scrapeAmazonProduct(url: string) {
         
         //Extract the product title
         const title = $('#productTitle').text().trim();
-        const currentPrice = extractPrice($);
+        let currentPrice = await extractPrice(url);
+        if (currentPrice == 'Price not found') {
+            currentPrice = extractPriceFallback($)
+        }
 
         console.log({ title, currentPrice });
         
