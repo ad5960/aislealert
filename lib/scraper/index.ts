@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { log } from 'console';
-import { extractPrice, extractPriceFallback } from '../utils';
+import { extractPrices, extractPriceFallback, extractListPrice } from '../utils';
 
 export async function scrapeAmazonProduct(url: string) {
     if (!url) return;
@@ -29,12 +29,22 @@ export async function scrapeAmazonProduct(url: string) {
         
         //Extract the product title
         const title = $('#productTitle').text().trim();
-        let currentPrice = await extractPrice(url);
-        if (currentPrice == 'Price not found') {
-            currentPrice = extractPriceFallback($)
+        let result = await extractPrices(url);
+        if ('error' in result) {
+            console.log(result.error); // Handle the error case
+        } else {
+            // Now TypeScript knows result is of type PriceResult
+            let { currentPrice, listPrice: originalPrice } = result;
+            if (currentPrice == 'Price not found' || originalPrice =='Price not found') {
+                const { fullPrice: currentPrice, listPriceSpan: originalPrice } = extractPriceFallback($)
+                console.log({ title, currentPrice, originalPrice });
+            }
+
+            else console.log({ title, currentPrice, originalPrice });
         }
 
-        console.log({ title, currentPrice });
+        
+
         
     } catch (error:any) {
         throw new Error(`Failed to scrape product: ${error.message}`)
